@@ -1,1 +1,0 @@
-import{d as o,r}from"./index-CJ9hYmeT.js";const l=o("githubAuth",()=>{const e=r(localStorage.getItem("github_token"));return{token:e,setToken:t=>{e.value=t,localStorage.setItem("github_token",t)},clearToken:()=>{e.value=null,localStorage.removeItem("github_token")}}});export{l as u};
