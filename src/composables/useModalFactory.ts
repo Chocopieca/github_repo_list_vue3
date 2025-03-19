@@ -2,6 +2,18 @@ import { useModalStore } from '@/stores/modalStore'
 import type { Component } from 'vue'
 import { ModalType } from '@/types/modal.types'
 
+interface ConfirmationOptions {
+  title?: string
+  confirmText?: string
+  cancelText?: string
+  onCancel?: () => void
+}
+
+const DEFAULT_CONFIRMATION_OPTIONS: ConfirmationOptions = {
+  confirmText: 'Confirm',
+  cancelText: 'Cancel'
+}
+
 export function useModalFactory() {
   const modalStore = useModalStore()
 
@@ -29,18 +41,13 @@ export function useModalFactory() {
   const showConfirmation = (
     message: string,
     onConfirm: () => void,
-    {
-      title,
-      confirmText = 'Confirm',
-      cancelText = 'Cancel',
-      onCancel,
-    }: {
-      title?: string
-      confirmText?: string
-      cancelText?: string
-      onCancel?: () => void
-    } = {},
+    options: ConfirmationOptions = {},
   ): string => {
+    const { title, confirmText, cancelText, onCancel } = {
+      ...DEFAULT_CONFIRMATION_OPTIONS,
+      ...options
+    }
+
     return modalStore.openModal({
       type: ModalType.CONFIRMATION,
       message,
@@ -52,19 +59,11 @@ export function useModalFactory() {
     })
   }
 
-  const closeModal = (id: string): void => {
-    modalStore.closeModal(id)
-  }
-
-  const closeAllModals = (): void => {
-    modalStore.closeAllModals()
-  }
-
   return {
     showError,
     showDynamic,
     showConfirmation,
-    closeModal,
-    closeAllModals,
+    closeModal: (id: string): void => modalStore.closeModal(id),
+    closeAllModals: (): void => modalStore.closeAllModals(),
   }
 }

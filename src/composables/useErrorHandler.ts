@@ -5,28 +5,11 @@ import { useModalFactory } from './useModalFactory'
 import { markRaw } from 'vue'
 import GithubAuthModal from '@/components/auth/GithubAuthModal.vue'
 
-interface ErrorModalState {
-  isVisible: boolean
-  message: string
-}
-
 export const useErrorHandler = () => {
-  const modalState = ref<ErrorModalState>({
-    isVisible: false,
-    message: '',
-  })
-
   const modalFactory = useModalFactory()
 
   const showErrorModal = (message: string) => {
-    modalState.value = {
-      isVisible: true,
-      message,
-    }
-  }
-
-  const hideErrorModal = () => {
-    modalState.value.isVisible = false
+    modalFactory.showError(message, 'Error')
   }
 
   const showAuthModal = () => {
@@ -54,8 +37,6 @@ export const useErrorHandler = () => {
 
   return {
     handleError,
-    modalState,
     showErrorModal,
-    hideErrorModal,
   }
 }

@@ -1,5 +1,9 @@
 import { ref } from 'vue'
 
+// Default cache settings
+const DEFAULT_TTL = 5 * 60 * 1000 // 5 minutes in milliseconds
+const KEY_SEPARATOR = ':'
+
 interface CacheItem<T> {
   data: T
   timestamp: number
@@ -7,41 +11,36 @@ interface CacheItem<T> {
 }
 
 interface CacheOptions {
-  ttl?: number // Time to live in milliseconds
+  ttl?: number
   enabled?: boolean
-  prefix?: string // Add prefix option
+  prefix?: string
 }
 
 export const useCache = () => {
   const cache = ref<Map<string, CacheItem<unknown>>>(new Map())
 
-  // Add prefix handling function
   const getPrefixedKey = (key: string, prefix?: string): string => {
-    return prefix ? `${prefix}:${key}` : key
+    return prefix ? `${prefix}${KEY_SEPARATOR}${key}` : key
   }
 
-  // Update set function to handle prefixes
+  const isExpired = (item: CacheItem<unknown>): boolean => {
+    return Date.now() - item.timestamp > item.ttl
+  }
+
   const set = <T>(key: string, data: T, options: CacheOptions = {}) => {
-    const ttl = options.ttl || 5 * 60 * 1000 // Default 5 minutes
     const prefixedKey = getPrefixedKey(key, options.prefix)
     cache.value.set(prefixedKey, {
       data,
       timestamp: Date.now(),
-      ttl,
+      ttl: options.ttl || DEFAULT_TTL,
     })
   }
 
-  // Update get function to handle prefixes
   const get = <T>(key: string, options: CacheOptions = {}): T | null => {
     const prefixedKey = getPrefixedKey(key, options.prefix)
     const item = cache.value.get(prefixedKey) as CacheItem<T> | undefined
 
-    if (!item) {
-      return null
-    }
-
-    const isExpired = Date.now() - item.timestamp > item.ttl
-    if (isExpired) {
+    if (!item || isExpired(item)) {
       cache.value.delete(prefixedKey)
       return null
     }
@@ -49,14 +48,11 @@ export const useCache = () => {
     return item.data
   }
 
-  // Update has function to handle prefixes
   const has = (key: string, options: CacheOptions = {}): boolean => {
     const prefixedKey = getPrefixedKey(key, options.prefix)
     const item = cache.value.get(prefixedKey)
-    if (!item) return false
 
-    const isExpired = Date.now() - item.timestamp > item.ttl
-    if (isExpired) {
+    if (!item || isExpired(item)) {
       cache.value.delete(prefixedKey)
       return false
     }
@@ -64,32 +60,34 @@ export const useCache = () => {
     return true
   }
 
-  // Update remove function to handle prefixes
   const remove = (key: string, options: CacheOptions = {}) => {
-    const prefixedKey = getPrefixedKey(key, options.prefix)
-    cache.value.delete(prefixedKey)
+    cache.value.delete(getPrefixedKey(key, options.prefix))
   }
 
-  // Add method to remove all items with specific prefix
   const removeByPrefix = (prefix: string) => {
+    const searchPrefix = `${prefix}${KEY_SEPARATOR}`
     for (const key of cache.value.keys()) {
-      if (key.startsWith(`${prefix}:`)) {
+      if (key.startsWith(searchPrefix)) {
         cache.value.delete(key)
       }
     }
   }
 
-  // Get cache key from request parameters
   const getCacheKey = (
     endpoint: string,
     params?: Record<string, string | number | boolean>,
     prefix?: string,
   ): string => {
-    const queryString = params
-      ? new URLSearchParams(Object.entries(params).map(([key, value]) => [key, String(value)]))
-      : ''
-    const key = `${endpoint}${queryString ? `?${queryString}` : ''}`
-    return getPrefixedKey(key, prefix)
+    if (!params) return getPrefixedKey(endpoint, prefix)
+
+    const queryString = new URLSearchParams(
+      Object.entries(params).map(([key, value]) => [key, String(value)])
+    ).toString()
+
+    return getPrefixedKey(
+      `${endpoint}${queryString ? `?${queryString}` : ''}`,
+      prefix
+    )
   }
 
   return {

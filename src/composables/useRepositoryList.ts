@@ -3,38 +3,84 @@ import { useGithubService } from '@/services/github/githubService'
 import type { GithubRepository } from '@/types/github.types'
 import { API_CONFIG } from '@/config/api'
 
+const STORAGE_KEYS = {
+  SCROLL: 'scrollPosition',
+  REPOS: 'repositories',
+  PAGE: 'currentPage'
+} as const
+
+const DEBOUNCE_DELAY = 100
+const SCROLL_RESTORE_DELAY = 100
+
+interface StorageState {
+  repositories: GithubRepository[]
+  page: number
+  scrollPosition: number
+}
+
 export function useRepositoryList() {
   const repositories = ref<GithubRepository[]>([])
   const loading = ref(false)
   const page = ref(1)
+  const scrollTimeout = ref<number | null>(null)
 
   const githubService = useGithubService()
 
-  // Save state to sessionStorage
+  // Storage management
   const saveState = () => {
-    sessionStorage.setItem('scrollPosition', window.scrollY.toString())
-    sessionStorage.setItem('repositories', JSON.stringify(repositories.value))
-    sessionStorage.setItem('currentPage', page.value.toString())
-  }
-
-  // Handle scroll event with debounce
-  let scrollTimeout: number | null = null
-  const handleScroll = () => {
-    if (scrollTimeout) {
-      window.clearTimeout(scrollTimeout)
+    const state: StorageState = {
+      repositories: repositories.value,
+      page: page.value,
+      scrollPosition: window.scrollY
     }
-    scrollTimeout = window.setTimeout(() => {
-      saveState()
-    }, 100)
+
+    Object.entries(state).forEach(([key, value]) => {
+      sessionStorage.setItem(
+        STORAGE_KEYS[key as keyof typeof STORAGE_KEYS],
+        JSON.stringify(value)
+      )
+    })
   }
 
+  const restoreState = async () => {
+    const savedState: Partial<StorageState> = {
+      repositories: JSON.parse(sessionStorage.getItem(STORAGE_KEYS.REPOS) || 'null'),
+      page: parseInt(sessionStorage.getItem(STORAGE_KEYS.PAGE) || '0'),
+      scrollPosition: parseInt(sessionStorage.getItem(STORAGE_KEYS.SCROLL) || '0')
+    }
+
+    if (savedState.repositories) {
+      repositories.value = savedState.repositories
+      page.value = savedState.page || 1
+    }
+
+    if (savedState.scrollPosition) {
+      await nextTick()
+      setTimeout(() => {
+        window.scrollTo({
+          top: savedState.scrollPosition,
+          behavior: 'instant'
+        })
+      }, SCROLL_RESTORE_DELAY)
+    }
+  }
+
+  // Scroll handling
+  const handleScroll = () => {
+    if (scrollTimeout.value) {
+      window.clearTimeout(scrollTimeout.value)
+    }
+    scrollTimeout.value = window.setTimeout(saveState, DEBOUNCE_DELAY)
+  }
+
+  // Data fetching
   const loadRepositories = async () => {
     if (loading.value) return
 
     try {
       loading.value = true
       const newRepos = await githubService.fetchPublicRepositories({
-        organization: 'nodejs',
+        organization: API_CONFIG.DEFAULT_ORGANIZATION,
         page: page.value,
         per_page: API_CONFIG.DEFAULT_PER_PAGE,
       })
@@ -48,50 +94,21 @@ export function useRepositoryList() {
     }
   }
 
-  // Restore state and scroll position
-  const restoreState = async () => {
-    const savedRepositories = sessionStorage.getItem('repositories')
-    const savedPage = sessionStorage.getItem('currentPage')
-    const savedScrollPosition = sessionStorage.getItem('scrollPosition')
+  // Lifecycle hooks
+  onMounted(async () => {
+    await restoreState()
 
-    if (savedRepositories) {
-      repositories.value = JSON.parse(savedRepositories)
-    }
-    if (savedPage) {
-      page.value = parseInt(savedPage)
-    }
-
-    // Restore scroll position after DOM update
-    if (savedScrollPosition) {
-      await nextTick()
-      // Add a small delay to ensure all content is rendered
-      setTimeout(() => {
-        window.scrollTo({
-          top: parseInt(savedScrollPosition),
-          behavior: 'instant',
-        })
-      }, 100)
-    }
-  }
-
-  onMounted(() => {
-    // First try to restore the state
-    restoreState()
-
-    // If no saved repositories, load initial data
     if (repositories.value.length === 0) {
       loadRepositories()
     }
 
-    // Add scroll event listener
     window.addEventListener('scroll', handleScroll)
   })
 
   onUnmounted(() => {
-    // Remove scroll event listener
     window.removeEventListener('scroll', handleScroll)
-    if (scrollTimeout) {
-      window.clearTimeout(scrollTimeout)
+    if (scrollTimeout.value) {
+      window.clearTimeout(scrollTimeout.value)
     }
   })
 
