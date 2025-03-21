@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import RepoList from '../RepoList.vue'
 import { useRepositoryList } from '@/composables/useRepositoryList'
-import type { GithubRepository } from '@/types/github.types'
+import type { GithubRepository } from '@/services/github/types'
 import { vInfiniteScroll } from '@/directives/infiniteScroll'
 import { createPinia, setActivePinia } from 'pinia'
 import { vLongPress } from '@/directives/longPress'
@@ -27,7 +27,7 @@ describe('RepoList', () => {
       avatar_url: 'https://github.com/test-user.png',
     },
     html_url: `https://github.com/test-user/test-repo-${id}`,
-    has_wiki: true,
+    has_wiki: true
   })
 
   // Helper to create wrapper with common options

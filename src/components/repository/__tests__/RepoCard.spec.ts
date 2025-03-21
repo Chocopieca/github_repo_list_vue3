@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import RepoCard from '../RepoCard.vue'
 import { useModalFactory } from '@/composables/useModalFactory'
-import type { GithubRepository } from '@/types/github.types'
+import type { GithubRepository, ExtendedGithubRepository } from '@/services/github/types'
 import type { DirectiveBinding } from 'vue'
 import type { LongPressOptions } from '@/directives/longPress'
 
@@ -16,7 +16,7 @@ describe('RepoCard', () => {
   const mockShowDynamic = vi.fn()
 
   // Base repository mock
-  const createMockRepository = (overrides?: Partial<GithubRepository>): GithubRepository => ({
+  const createMockRepository = (overrides?: Partial<ExtendedGithubRepository>): ExtendedGithubRepository => ({
     id: 1,
     name: 'test-repo',
     description: 'Test repository description',
@@ -27,11 +27,12 @@ describe('RepoCard', () => {
     },
     html_url: 'https://github.com/test-user/test-repo',
     has_wiki: true,
+    subscribers_count: 0,
     ...overrides,
   })
 
   // Helper to create wrapper with common options
-  const createWrapper = (repository: GithubRepository, withLongPress = false) => {
+  const createWrapper = (repository: ExtendedGithubRepository, withLongPress = false) => {
     return mount(RepoCard, {
       props: { repository },
       global: {

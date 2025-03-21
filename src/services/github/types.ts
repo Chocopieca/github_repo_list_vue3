@@ -12,7 +12,7 @@ export interface GithubApiResponse {
   total_count: number
 }
 
-export interface GithubRepository extends GithubRepositoryDitels {
+export interface GithubRepository {
   id: number
   name: string
   description: string | null
@@ -25,13 +25,13 @@ export interface GithubRepository extends GithubRepositoryDitels {
   }
 }
 
+export interface ExtendedGithubRepository extends GithubRepository, GithubRepositoryDitels {}
+
 export interface FetchRepositoriesParams {
   page?: number
   per_page?: number
   organization?: string
 }
-
-
 
 export interface PaginationParams {
   page?: number

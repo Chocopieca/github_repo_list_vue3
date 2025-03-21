@@ -1,6 +1,6 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useGithubService } from '@/services/github/githubService'
-import type { GithubRepository } from '@/services/github/types'
+import type { ExtendedGithubRepository } from '@/services/github/types'
 import { API_CONFIG } from '@/config/api'
 
 const STORAGE_KEYS = {
@@ -13,13 +13,13 @@ const DEBOUNCE_DELAY = 100
 const SCROLL_RESTORE_DELAY = 100
 
 interface StorageState {
-  repositories: GithubRepository[]
+  repositories: ExtendedGithubRepository[]
   page: number
   scrollPosition: number
 }
 
 export function useRepositoryList() {
-  const repositories = ref<GithubRepository[]>([])
+  const repositories = ref<ExtendedGithubRepository[]>([])
   const loading = ref(false)
   const page = ref(1)
   const scrollTimeout = ref<number | null>(null)

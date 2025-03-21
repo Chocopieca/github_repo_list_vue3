@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useRepositoryList } from '../useRepositoryList'
-import { useGithubService, type IGithubService } from '@/services/github/githubService'
+import { useGithubService } from '@/services/github/githubService'
 import { API_CONFIG } from '@/config/api'
-import type { GithubRepository } from '@/types/github.types'
+import type { ExtendedGithubRepository, IGithubService } from '@/services/github/types'
 import { defineComponent } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
 
@@ -11,20 +11,21 @@ vi.mock('@/services/github/githubService', () => ({
     () =>
       ({
         fetchPublicRepositories: vi.fn(),
+        fetchRepositorieDitels: vi.fn(),
       }) as IGithubService,
   ),
 }))
 
 interface InitialState {
-  repositories?: GithubRepository[]
+  repositories?: ExtendedGithubRepository[]
   loading?: boolean
 }
 
 interface RepositoryListComponent {
-  repositories: GithubRepository[]
+  repositories: ExtendedGithubRepository[]
   loading: boolean
   loadRepositories: () => Promise<void>
-  updateRepositories: (repos: GithubRepository[]) => void
+  updateRepositories: (repos: ExtendedGithubRepository[]) => void
   setLoading: (value: boolean) => void
 }
 
@@ -35,7 +36,7 @@ describe('useRepositoryList', () => {
   const mockFetchPublicRepositories = vi.fn()
 
   // Helper to create mock repository
-  const createMockRepository = (id: number): GithubRepository => ({
+  const createMockRepository = (id: number): ExtendedGithubRepository => ({
     id,
     name: `test-repo-${id}`,
     description: `Test repository ${id}`,
@@ -46,6 +47,7 @@ describe('useRepositoryList', () => {
     },
     html_url: `https://github.com/test-user/test-repo-${id}`,
     has_wiki: true,
+    subscribers_count: 10
   })
 
   // Helper to create test component wrapper
@@ -64,7 +66,7 @@ describe('useRepositoryList', () => {
 
           return {
             ...repositoryList,
-            updateRepositories: (repos: GithubRepository[]) => {
+            updateRepositories: (repos: ExtendedGithubRepository[]) => {
               repositoryList.repositories.value = repos
             },
             setLoading: (value: boolean) => {
@@ -94,6 +96,7 @@ describe('useRepositoryList', () => {
     // Setup mocks
     vi.mocked(useGithubService).mockReturnValue({
       fetchPublicRepositories: mockFetchPublicRepositories,
+      fetchRepositorieDitels: (repo: string) => Promise.resolve({ subscribers_count: 10 }),
     } as IGithubService)
 
     setupStorageMock()

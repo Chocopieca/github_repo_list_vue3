@@ -2,10 +2,10 @@
 import { useModalFactory } from '@/composables/useModalFactory'
 import UrlDialog from './UrlDialog.vue'
 import { markRaw, computed } from 'vue'
-import type { GithubRepository } from '@/services/github/types'
+import type { ExtendedGithubRepository } from '@/services/github/types'
 
 interface Props {
-  repository: GithubRepository
+  repository: ExtendedGithubRepository
 }
 
 const props = defineProps<Props>()
