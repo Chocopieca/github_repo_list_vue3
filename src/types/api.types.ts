@@ -14,11 +14,6 @@ export interface ApiResponse<T> {
   headers?: Record<string, string>
 }
 
-export interface PaginationParams {
-  page?: number
-  per_page?: number
-}
-
 export interface ApiError extends Error {
   status?: number
   response?: unknown

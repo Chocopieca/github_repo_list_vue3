@@ -19,8 +19,10 @@ const { repositories, loading, loadRepositories } = useRepositoryList()
       <span>No repositories found</span>
     </div>
 
-    <div v-else v-for="repo in repositories" :key="repo.id">
-      <RepoCard :repository="repo" />
+    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div v-for="repo in repositories" :key="repo.id">
+        <RepoCard :repository="repo" />
+      </div>
     </div>
 
     <div v-if="loading" class="loading-indicator">

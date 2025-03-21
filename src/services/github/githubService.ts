@@ -2,11 +2,8 @@ import { BaseApiService } from '../api/baseApiService'
 import { useGithubAuthStore } from '@/stores/githubAuth'
 import { API_CONFIG } from '@/config/api'
 import type { FetchRepositoriesParams, GithubServiceConfig } from './types'
-import type { GithubApiResponse, GithubRepository } from '@/types/github.types'
+import type { GithubApiResponse, GithubRepository, IGithubService, GithubRepositoryDitels  } from '@/services/github/types'
 
-export interface IGithubService {
-  fetchPublicRepositories(params: FetchRepositoriesParams): Promise<GithubRepository[]>
-}
 
 export class GithubService extends BaseApiService implements IGithubService {
   private authStore = useGithubAuthStore()
@@ -50,6 +47,17 @@ export class GithubService extends BaseApiService implements IGithubService {
     })
 
     return response.items
+  }
+
+  public async fetchRepositorieDitels(repo: string): Promise<GithubRepositoryDitels> {
+
+    return await this.api.get<GithubRepositoryDitels>(`/repos/nodejs/${repo}`, {
+      headers: this.getHeaders(),
+      cache: {
+        enabled: true,
+        ttl: 5 * 60 * 1000, // 5 minutes
+      },
+    })
   }
 }
 

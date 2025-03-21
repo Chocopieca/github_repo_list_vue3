@@ -1,6 +1,6 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useGithubService } from '@/services/github/githubService'
-import type { GithubRepository } from '@/types/github.types'
+import type { GithubRepository } from '@/services/github/types'
 import { API_CONFIG } from '@/config/api'
 
 const STORAGE_KEYS = {
@@ -84,7 +84,16 @@ export function useRepositoryList() {
         page: page.value,
         per_page: API_CONFIG.DEFAULT_PER_PAGE,
       })
-      repositories.value.push(...newRepos)
+
+      const newRepoList = await Promise.all(newRepos.map(async (item) => {
+        const details = await githubService.fetchRepositorieDitels(item.name);
+        return {
+          ...item,
+          subscribers_count: details.subscribers_count,
+        }
+      }));
+
+      repositories.value.push(...newRepoList)
       page.value++
       saveState()
     } catch (error) {

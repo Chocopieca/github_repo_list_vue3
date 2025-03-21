@@ -2,7 +2,7 @@
 import { useModalFactory } from '@/composables/useModalFactory'
 import UrlDialog from './UrlDialog.vue'
 import { markRaw, computed } from 'vue'
-import type { GithubRepository } from '@/types/github.types'
+import type { GithubRepository } from '@/services/github/types'
 
 interface Props {
   repository: GithubRepository
@@ -31,12 +31,18 @@ const description = computed(() => props.repository.description || '')
 </script>
 
 <template>
-  <div :class="cardClasses" v-long-press="{ onLongPress: handleLongPress, delay: 500 }">
-    <h2 class="text-xl font-bold text-gray-800 mb-2">{{ repository.name }}</h2>
-    <p v-if="description" class="text-gray-600 mb-3">{{ description }}</p>
-    <div class="flex items-center text-sm text-gray-500">
+  <div :class="cardClasses" class="text-black h-full" v-long-press="{ onLongPress: handleLongPress, delay: 500 }">
+    <div class="flex justify-between">
+
+    </div>
+    <p v-if="description" class="mb-3">{{ description }}</p>
+    <div class="flex items-center text-sm">
       <span class="mr-2">Owner:</span>
       <span class="font-medium">{{ repository.owner.login }}</span>
+    </div>
+    <div class="flex items-center text-sm">
+      <span class="mr-2">Subscribers:</span>
+      <span class="font-medium">{{ repository.subscribers_count }}</span>
     </div>
   </div>
 </template>
